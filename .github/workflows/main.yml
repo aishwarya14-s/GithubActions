@@ -16,10 +16,8 @@ jobs:
       - name: Fail if branch name does not match pattern
         run: |
           BRANCH_NAME="${GITHUB_REF#refs/heads/}"
-          DATE_PATTERN='/hotfix\/\d{2}_\d{2}_\d{4}/gm'
+          DATE_PATTERN='^hotfix\/[0-9]{2}_[0-9]{2}_[0-9]{4}$'
           if [[ ! $BRANCH_NAME =~ $DATE_PATTERN ]]; then
-            echo "Error: Invalid branch name! Branch names for hotfixes should match 'hotfix/DD_MM_YY'."
+            echo "Error: Invalid branch name! Branch names for hotfixes should match 'hotfix/DD_MM_YYYY'."
             exit 1
           fi
-
-     

@@ -16,31 +16,10 @@ jobs:
       - name: Fail if branch name does not match pattern
         run: |
           BRANCH_NAME="${GITHUB_REF#refs/heads/}"
-          DATE_PATTERN='^hotfix\/(0[1-9]|1[0-2])_(0[1-9]|1[0-9]|2[0-9]|3[0-1])_[0-9]{2}$'
+          DATE_PATTERN='/hotfix\/\d{2}_\d{2}_\d{4}/gm'
           if [[ ! $BRANCH_NAME =~ $DATE_PATTERN ]]; then
             echo "Error: Invalid branch name! Branch names for hotfixes should match 'hotfix/DD_MM_YY'."
             exit 1
           fi
 
-      - name: Disable merge if branch name is invalid
-        uses: actions/github-script@v4
-        with:
-          script: |
-            const prNumber = context.payload.pull_request.number;
-            const branchName = context.payload.pull_request.head.ref;
-            
-            if (!/^hotfix\/(0[1-9]|1[0-2])_(0[1-9]|1[0-9]|2[0-9]|3[0-1])_[0-9]{2}$/.test(branchName)) {
-              const octokit = github.getOctokit(process.env.GITHUB_TOKEN);
-              await octokit.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: prNumber,
-                body: 'Error: Invalid branch name! Branch names for hotfixes should match "hotfix/DD_MM_YY".'
-              });
-              await octokit.pulls.update({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                pull_number: prNumber,
-                state: 'closed'
-              });
-            }
+     

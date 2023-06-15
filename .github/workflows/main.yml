@@ -2,6 +2,9 @@ name: Validate Branch Name
 
 on:
   pull_request:
+    types:
+      - opened
+      - synchronize
     branches:
       - 'production'
 
@@ -16,9 +19,14 @@ jobs:
       - name: Fail if branch name does not match pattern
         run: |
           BRANCH_NAME="${GITHUB_REF#refs/heads/}"
+          BASE_BRANCH="${GITHUB_BASE_REF#refs/heads/}"
           echo $BRANCH_NAME
-          DATE_PATTERN='^hotfix\/[0-9]{2}_[0-9]{2}_[0-9]{4}$'
-          if [[ ! $BRANCH_NAME =~ $DATE_PATTERN ]]; then
-            echo "Error: Invalid branch name! Branch names for hotfixes should match 'hotfix/DD_MM_YYYY'."
+          HOTFIX_PATTERN='^hotfix\/[0-9]{2}_[0-9]{2}_[0-9]{2}\/.*$'
+          RELEASE_PATTERN='^Release\/[0-9]{2}_[0-9]{2}_[0-9]{4}\/Release_[0-9]+\.[0-9]+$'
+          if [[ $BASE_BRANCH != 'production' && (! $BRANCH_NAME =~ $HOTFIX_PATTERN && ! $BRANCH_NAME =~ $RELEASE_PATTERN) ]]; then
+            echo "Error: Invalid branch name!"
+            echo "Branch names should match one of the following patterns:"
+            echo "  - hotfix/DD_MM_YY/any_custom_name"
+            echo "  - Release/DD_MM_YYYY/Release_X.Y"
             exit 1
           fi

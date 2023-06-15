@@ -5,8 +5,6 @@ on:
     types:
       - opened
       - synchronize
-    branches:
-      - 'production'
 
 jobs:
   check_branch_name:
@@ -16,14 +14,23 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
+      - name: Check excluded branches
+        id: check_branch
+        run: |
+          EXCLUDED_BRANCHES='master main staging'
+          BRANCH_NAME="${{ github.event.pull_request.head.ref }}"
+          if echo "$EXCLUDED_BRANCHES" | grep -wq "$BRANCH_NAME"; then
+            echo "Skipping validation for excluded branch: $BRANCH_NAME"
+            exit 0
+          fi
+
       - name: Fail if branch name does not match pattern
         run: |
-          BRANCH_NAME="${GITHUB_REF#refs/heads/}"
-          BASE_BRANCH="${GITHUB_BASE_REF#refs/heads/}"
+          BRANCH_NAME="${{ github.event.pull_request.head.ref }}"
           echo $BRANCH_NAME
           HOTFIX_PATTERN='^hotfix\/[0-9]{2}_[0-9]{2}_[0-9]{2}\/.*$'
-          RELEASE_PATTERN='^Release\/[0-9]{2}_[0-9]{2}_[0-9]{4}\/Release_[0-9]+\.[0-9]+$'
-          if [[ $BASE_BRANCH != 'production' && (! $BRANCH_NAME =~ $HOTFIX_PATTERN && ! $BRANCH_NAME =~ $RELEASE_PATTERN) ]]; then
+          RELEASE_PATTERN='^Release\/[0-9]{2}_[0-9]{2}_[0-9]{4}\/.*$'
+          if [[ ! ($BRANCH_NAME =~ $HOTFIX_PATTERN || $BRANCH_NAME =~ $RELEASE_PATTERN) ]]; then
             echo "Error: Invalid branch name!"
             echo "Branch names should match one of the following patterns:"
             echo "  - hotfix/DD_MM_YY/any_custom_name"

@@ -18,9 +18,10 @@ jobs:
 
       - name: Fail if branch name does not match pattern
         run: |
-          BRANCH_NAME="${GITHUB_REF#refs/heads/}"
-          BASE_BRANCH="${GITHUB_BASE_REF#refs/heads/}"
+          BRANCH_NAME="${{ github.event.pull_request.head.ref }}"
           echo $BRANCH_NAME
+          BASE_BRANCH="${GITHUB_BASE_REF#refs/heads/}"
+          echo $BASE_BRANCH
           HOTFIX_PATTERN='^hotfix\/[0-9]{2}_[0-9]{2}_[0-9]{2}\/.*$'
           RELEASE_PATTERN='^Release\/[0-9]{2}_[0-9]{2}_[0-9]{4}\/Release_[0-9]+\.[0-9]+$'
           if [[ $BASE_BRANCH != 'production' && (! $BRANCH_NAME =~ $HOTFIX_PATTERN && ! $BRANCH_NAME =~ $RELEASE_PATTERN) ]]; then

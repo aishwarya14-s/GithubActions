@@ -1,3 +1,4 @@
+
 name: Validate Branch Name
 
 on:
@@ -23,7 +24,7 @@ jobs:
           echo $BRANCH_NAME
           HOTFIX_PATTERN='^hotfix\/[0-9]{2}_[0-9]{2}_[0-9]{2}\/.*$'
           RELEASE_PATTERN='^Release\/[0-9]{2}_[0-9]{2}_[0-9]{4}\/Release_[0-9]+\.[0-9]+$'
-          if [[ $BASE_BRANCH != 'production' && (! $BRANCH_NAME =~ $HOTFIX_PATTERN && ! $BRANCH_NAME =~ $RELEASE_PATTERN) ]]; then
+          if [[ $CHANGE_BRANCH != 'master' && $CHANGE_BRANCH != 'main' && $CHANGE_BRANCH != 'staging'(! $BRANCH_NAME =~ $HOTFIX_PATTERN && ! $BRANCH_NAME =~ $RELEASE_PATTERN) ]]; then
             echo "Error: Invalid branch name!"
             echo "Branch names should match one of the following patterns:"
             echo "  - hotfix/DD_MM_YY/any_custom_name"

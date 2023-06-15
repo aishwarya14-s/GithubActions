@@ -9,20 +9,11 @@ on:
 jobs:
   check_branch_name:
     runs-on: ubuntu-latest
+    if: "!contains('master main staging', github.head_ref)"
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-
-      - name: Check excluded branches
-        id: check_branch
-        run: |
-          EXCLUDED_BRANCHES='master main staging'
-          BRANCH_NAME="${{ github.event.pull_request.head.ref }}"
-          if echo "$EXCLUDED_BRANCHES" | grep -wq "$BRANCH_NAME"; then
-            echo "Skipping validation for excluded branch: $BRANCH_NAME"
-            exit 0
-          fi
 
       - name: Fail if branch name does not match pattern
         run: |

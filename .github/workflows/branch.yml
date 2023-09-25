@@ -14,8 +14,6 @@ jobs:
     steps:
 
       # Add your existing code lines 16 to 26 here
-      - uses: phpdocker-io/github-actions-delete-abandoned-branches@v2
-        with:
           github_token: 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
           last_commit_age_days: 30
           dry_run: no

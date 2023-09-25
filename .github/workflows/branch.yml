@@ -13,9 +13,18 @@ jobs:
 
     steps:
       - name: Delete old branches
-        env:
-
-      # Add your existing code lines 16 to 26 here
+        run: |
+          today=$(date -u +"%Y-%m-%d")
+          thirty_days_ago=$(date -u -d "$today -30 days" +"%Y-%m-%d")
+          while read -r branch_date branch_name; do
+            if [[ $branch_date < $thirty_days_ago ]]; then
+              echo "Deleting branch $branch_name"
+              git push origin --delete "$branch_name"
+            else
+              echo "Branch $branch_name is not old enough to delete"
+            fi
+          done
+        env : 
           github_token: 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
           last_commit_age_days: 30
           dry_run: no

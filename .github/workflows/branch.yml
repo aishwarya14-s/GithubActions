@@ -1,8 +1,7 @@
 name: Delete Old Branches
 
 on:
-  schedule:
-    - cron: "0 0 * * *" # Trigger the workflow daily at midnight (adjust the cron schedule as needed)
+  workflow_dispatch:
 
 jobs:
   delete-branches:

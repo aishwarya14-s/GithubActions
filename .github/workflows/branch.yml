@@ -1,28 +1,32 @@
-name: Cleanup Old Branches
+name: Delete Old Branches
 
 on:
   schedule:
-    - cron: "0 0 */30 * *"  # Runs every 30 days at midnight
+    - cron: '14 13 * * *' # Runs every day at midnight (adjust as needed)
 
 jobs:
-  cleanup:
+  delete-branches:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v2
+      - name: Check out code
+        uses: actions/checkout@v2
 
-    - name: List Branches
-      run: |
-        git for-each-ref --format="%(refname:short) %(committerdate:raw)" refs/heads/ |
-        while read branch date; do
-          if [[ "$branch" != "master" && "$branch" != "main" && "$branch" != "production" && "$branch" != "development" && "$branch" != "staging" ]]; then
-            timestamp=$(date -d "$date" +%s)
-            now=$(date +%s)
-            age=$(( (now - timestamp) / 86400 ))  # Calculate age in days
-            
-            if [ $age -gt 30 ]; then
-              git push origin --delete $branch
+      - name: Fetch all branches
+        run: git fetch --prune --tags
+
+      - name: List branches and timestamps
+        run: git for-each-ref --sort=committerdate --format="%(committerdate:short) %(refname:short)" refs/heads/*
+
+      - name: Delete old branches
+        run: |
+          today=$(date -u +"%Y-%m-%d")
+          thirty_days_ago=$(date -u -d "$today -30 days" +"%Y-%m-%d")
+          while read -r branch_date branch_name; do
+            if [[ $branch_date < $thirty_days_ago ]]; then
+              echo "Deleting branch $branch_name"
+              git push origin --delete "$branch_name"
+            else
+              echo "Branch $branch_name is not old enough to delete"
             fi
-          fi
-        done
+          done

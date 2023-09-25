@@ -1,31 +1,32 @@
-name: Repo cleanup (old PRs, branches and issues)
+name: Delete Old Branches
 
 on:
   schedule:
-    - cron: "12 14 * * *"
-
-  # Allow workflow to be manually run from the GitHub UI
-  workflow_dispatch:
+    - cron: "0 0 * * *" # Trigger the workflow daily at midnight (adjust the cron schedule as needed)
 
 jobs:
-  cleanup-repository:
+  delete-branches:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Delete old branches
+      - name: Check out code
+        uses: actions/checkout@v2
+
+      - name: Fetch all branches
+        run: git fetch --prune --tags
+
+      - name: List branches and timestamps
         run: |
           today=$(date -u +"%Y-%m-%d")
           thirty_days_ago=$(date -u -d "$today -30 days" +"%Y-%m-%d")
+          git for-each-ref --sort=committerdate --format="%(committerdate:short) %(refname:short)" refs/heads/* |
           while read -r branch_date branch_name; do
-            if [[ $branch_date < $thirty_days_ago ]]; then
+            branch_timestamp=$(date -u -d "$branch_date" +%s)
+            thirty_days_ago_timestamp=$(date -u -d "$thirty_days_ago" +%s)
+            if [ "$branch_timestamp" -lt "$thirty_days_ago_timestamp" ]; then
               echo "Deleting branch $branch_name"
               git push origin --delete "$branch_name"
             else
               echo "Branch $branch_name is not old enough to delete"
             fi
           done
-        env : 
-          github_token: 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
-          last_commit_age_days: 30
-          dry_run: no
-          ignore_branches: master,main,staging,development,production

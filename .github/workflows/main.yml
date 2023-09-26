@@ -19,6 +19,11 @@ jobs:
         echo "ONE_MONTH_AGO_DATE=$one_month_ago_date" >> $GITHUB_ENV
         echo "Calculated one month ago date: $(date -d @$one_month_ago_date "+%Y-%m-%d")"
 
+    - name: List branches for debugging
+      run: |
+        git branch -r
+        echo "ONE_MONTH_AGO_DATE=${ONE_MONTH_AGO_DATE}"
+
     - name: Run delete branches script
       run: |
         current_date=$(date "+%s")

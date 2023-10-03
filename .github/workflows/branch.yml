@@ -1,31 +1,30 @@
-name: Delete Old Branches
-
-on:
-  workflow_dispatch:
-
+name: Release
+"on":
+  push:
+    branches:
+      - main
+permissions:
+  contents: read # for checkout
 jobs:
-  delete-branches:
+  release:
+    permissions:
+      contents: write # to be able to publish a GitHub release
+      issues: write # to be able to comment on released issues
+      pull-requests: write # to be able to comment on released pull requests
+      id-token: write # to enable use of OIDC for npm provenance
+    name: release
     runs-on: ubuntu-latest
-
     steps:
-      - name: Check out code
-        uses: actions/checkout@v2
-
-      - name: Fetch all branches
-        run: git fetch --prune --tags
-
-      - name: List branches and timestamps
-        run: |
-          today=$(date -u +"%Y-%m-%d")
-          thirty_days_ago=$(date -u -d "$today -30 days" +"%Y-%m-%d")
-          git for-each-ref --sort=committerdate --format="%(committerdate:short) %(refname:short)" refs/heads/* |
-          while read -r branch_date branch_name; do
-            branch_timestamp=$(date -u -d "$branch_date" +%s)
-            thirty_days_ago_timestamp=$(date -u -d "$thirty_days_ago" +%s)
-            if [ "$branch_timestamp" -lt "$thirty_days_ago_timestamp" ]; then
-              echo "Deleting branch $branch_name"
-              git push origin --delete "$branch_name"
-            else
-              echo "Branch $branch_name is not old enough to delete"
-            fi
-          done
+      - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4
+      - uses: actions/setup-node@5e21ff4d9bc1a8cf6de233a3057d20ec6b3fb69d # v3
+        with:
+          cache: npm
+          node-version: lts/*
+      - run: npm clean-install
+      - run: npm audit signatures
+      # pinned version updated automatically by Renovate.
+      # details at https://semantic-release.gitbook.io/semantic-release/usage/installation#global-installation
+      - run: npx semantic-release@21.0.2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.SEMANTIC_RELEASE_BOT_NPM_TOKEN }}

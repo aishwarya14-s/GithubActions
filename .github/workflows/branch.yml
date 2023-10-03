@@ -1,16 +1,32 @@
 name: Release
+
 on:
   pull_request:
     branches:
       - main
       - "+([0-9])?(.{+([0-9]),x}).x"
-plugins:
-  - "@semantic-release/commit-analyzer"
-  - "@semantic-release/release-notes-generator"
-  - "@semantic-release/exec":
-      verifyReleaseCmd: 'mvn versions:set -DnewVersion="${nextRelease.version}" && echo "NEXT_VERSION=${nextRelease.version}" >> build.env'
-  - "@semantic-release/gitlab"
-  - "@semantic-release/git":
-      assets:
-        - pom.xml
-      message: "chore(release): bump ${nextRelease.version}"
+
+jobs:
+  print-username:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Semantic Release
+        uses: cycjimmy/semantic-release-action@v4
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      # Plugins section
+      - name: Install Node.js and Dependencies
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14' # or any desired Node.js version
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Run Semantic Release
+        run: npx semantic-release
+

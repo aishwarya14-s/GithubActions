@@ -1,57 +1,37 @@
-name: Release
+name: semantic-release
 
 on:
   push:
     branches:
       - production
 
+env:
+  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
 jobs:
-  release:
-    name: release
+  build:
+
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x]
+
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Semantic Release
-        uses: ./
-        id: semantic
-        with:
-          branches: |
-            [
-              '+([0-9])?(.{+([0-9]),x}).x',
-              'production'
-              {
-                name: 'beta',
-                prerelease: true
-              },
-              {
-                name: 'alpha',
-                prerelease: true
-              }
-            ]
-          extra_plugins: |
-            @semantic-release/git
-            @semantic-release/changelog
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - name: Setup Node.js with GitHub Package Registry
+      - uses: actions/checkout@v3
+      - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v3
-        with:
-          node-version: 20
-          registry-url: 'https://npm.pkg.github.com'
-          scope: 'cycjimmy'
+      - run: npm install --no-save
 
-      - name: Publish To GitHub Package Registry
-        if: steps.semantic.outputs.new_release_published == 'true'
-        run: npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
+      # Find the commit hash where the feature branch diverged from production
+      - name: Find commit hash
+        run: |
+          commit_hash=$(git merge-base HEAD production)
+          echo "::set-output name=commit_hash::$commit_hash"
 
-      - name: Push updates to branch for major version
-        if: steps.semantic.outputs.new_release_published == 'true'
-        run: "git push https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git HEAD:refs/heads/v${{steps.semantic.outputs.new_release_major_version}}"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # Check commit messages using the commit hash as reference
+      - name: Check commit messages
+        run: npx commitlint --from=${{ steps.find_commit_hash.outputs.commit_hash }}
+
+      - run: npx semantic-release
+
